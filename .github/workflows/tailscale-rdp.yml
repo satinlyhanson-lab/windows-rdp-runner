@@ -205,7 +205,9 @@ jobs:
         
         Write-Host "Setting up Tailscale port forward for CDP..."
         $env:PATH = "$env:PATH;C:\Program Files\Tailscale"
-        & "C:\Program Files\Tailscale\tailscale.exe" serve --tcp 9222 tcp://localhost:9222
+        $serveJob = Start-Job -ScriptBlock { & "C:\Program Files\Tailscale\tailscale.exe" serve --tcp 9222 tcp://localhost:9222 2>&1 }
+if (Wait-Job $serveJob -Timeout 45) { Receive-Job $serveJob | Out-Null } else { Write-Warning "tailscale serve timed out; continuing without CDP forward"; Stop-Job $serveJob }
+Remove-Job $serveJob -Force -ErrorAction SilentlyContinue
         Write-Host "Tailscale port forward configured"
       shell: powershell
 
